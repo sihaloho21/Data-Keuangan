@@ -100,17 +100,8 @@ function doPost(e) {
 }
 
 function setupDatabase() {
-  const spreadsheet = getSpreadsheet();
-
   Object.keys(HEADERS).forEach(function(sheetName) {
-    let sheet = spreadsheet.getSheetByName(sheetName);
-    if (!sheet) {
-      sheet = spreadsheet.insertSheet(sheetName);
-    }
-
-    const headers = HEADERS[sheetName];
-    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-    sheet.setFrozenRows(1);
+    ensureSheet(sheetName);
   });
 
   seedDefaultsIfEmpty();
@@ -157,11 +148,50 @@ function getSpreadsheet() {
 }
 
 function getSheet(name) {
-  const sheet = getSpreadsheet().getSheetByName(name);
+  return ensureSheet(name);
+}
+
+function ensureSheet(name) {
+  const spreadsheet = getSpreadsheet();
+  let sheet = spreadsheet.getSheetByName(name);
+
   if (!sheet) {
-    throw new Error('Sheet not found: ' + name);
+    sheet = spreadsheet.insertSheet(name);
   }
+
+  ensureSheetHeader(sheet, name);
+
   return sheet;
+}
+
+function ensureSheetHeader(sheet, sheetName) {
+  const headers = HEADERS[sheetName];
+
+  if (!headers) {
+    throw new Error('Unknown sheet: ' + sheetName);
+  }
+
+  const lastColumn = Math.max(sheet.getLastColumn(), headers.length);
+  const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  const hasHeader = currentHeaders.some(function(cell) {
+    return cell !== '';
+  });
+
+  if (!hasHeader) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.setFrozenRows(1);
+    return;
+  }
+
+  const needsHeaderRepair = headers.some(function(header, index) {
+    return currentHeaders[index] !== header;
+  });
+
+  if (needsHeaderRepair) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
+
+  sheet.setFrozenRows(1);
 }
 
 function getSheetObjects(sheetName) {

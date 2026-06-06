@@ -48,6 +48,8 @@ Cara cepat:
 5. Deploy sebagai `Web app`, `Execute as: Me`, `Who has access: Anyone`.
 6. Masukkan URL deployment ke `VITE_GAS_API_URL`.
 
+`Code.gs` juga otomatis membuat sheet yang belum ada saat endpoint dipanggil. Fungsi `setupDatabase` tetap berguna untuk inisialisasi awal dan seed kategori/dompet/settings.
+
 ## Netlify
 
 Konfigurasi sudah tersedia di [netlify.toml](netlify.toml):
